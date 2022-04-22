@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set +u
+
+OUTPATH=/mnt/mame-media/media/floppies
+
+DESTIMG=${1:-/tmp/floptmp.img}
+DESTSZE=${2:-1440}
+
+[ -f $OUTPATH/$DESTIMG ] && echo "Image exists $DESTIMG, delete to recreate" && exit 1
+
+mkfs.msdos -C "$OUTPATH/$DESTIMG" $DESTSZE

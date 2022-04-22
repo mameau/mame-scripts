@@ -1,0 +1,29 @@
+#!/bin/bash
+
+#set -x
+
+MATCH="${1:-.+}"
+BENCHTM=30
+MAMEVER=238
+MAMEBENCH=/mnt/mame-media/benchmarks
+MAMEXML=/mnt/mame-media/xml/mame${MAMEVER}.xml
+
+cd ${MAMEBENCH}
+
+MATCHED=$(grep -E "<machine name=\".*${MATCH}" $MAMEXML  | sed -r 's/.*name\=\"(.+)\"\ sourcefile.*/\1/' )
+
+declare -A RESULTS
+
+echo "driver,average_speed,runtime"
+for DRIVER in ${MATCHED[@]}
+do
+
+	RESULTS[driver]=${DRIVER}
+
+	# Average speed: 177.03% (29 seconds)
+	MAMESTDOUT=$(mame -bench $BENCHTM $DRIVER 2>/dev/null | grep -i "Average")
+	RESULTS[average]=$(echo $MAMESTDOUT | sed -rn 's/.*\s([0-9\.].+)%.*/\1/p')
+	RESULTS[runtime]=$(echo $MAMESTDOUT | sed -rn 's/.*\(([0-9]+)\s[a-z]+\)/\1/p')
+
+	echo "${RESULTS[driver]},${RESULTS[average]},${RESULTS[runtime]}"
+done

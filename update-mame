@@ -1,0 +1,73 @@
+#!/bin/bash
+
+#set -x
+MAMEVER=""
+MAMEBUILD=""
+MAME64=0
+DEBUG=""
+DERIV=""
+
+function _usage {
+  echo "$(basename $0)"
+  echo " -h this help"
+  echo " -b build name (local)"
+  echo " -m mame version"
+  echo " -s this is a mame64 build"
+  echo " -d this is a debug build"
+  echo " -f build type (e.g wolf)"
+  exit 1
+}
+
+OPTSTRING=":hb:m:df:"
+while getopts $OPTSTRING ARG
+do
+  case $ARG in
+    h)
+      _usage
+      ;;
+    b)
+      MAMEBUILD=$OPTARG
+      ;;
+    m)
+      MAMEVER=$OPTARG
+      ;;
+    s)
+      MAME64=1
+      ;;
+    d)
+      DEBUG="d"
+      ;;
+    f)
+      DERIV=${OPTARG}
+  esac
+done
+
+[[ ${#} -eq 0 ]]    && echo "No arguments supplied"                  && _usage
+
+REQFAIL=0
+#[ -z "$MAMEBUILD" ] && echo "Pass -b including the local mamebuild"  && REQFAIL=1
+[ -z "$MAMEVER" ]   && echo "Pass -m with mame version (e.g 236)"    && REQFAIL=1
+[ $REQFAIL -ne 0 ]  && _usage
+
+SRC=$HOME/dockerout/${DERIV}mame/${DERIV}mame${MAMEBUILD}/
+DEST=$HOME/games/emulator-${DERIV}mame${MAMEVER}${DEBUG}/
+
+
+[ ! -d $DEST ] && mkdir $DEST
+MAMECVER=$($SRC/mame${DEBUG} -version | awk '{print $1}' | cut -d'.' -f2)
+
+REQFAIL=0
+[ "$MAMECVER" != "$MAMEVER" ] && echo "$MAMECVER does not match $MAMEVER" && REQFAIL=1
+if [[ $REQFAIL -eq 1 && -f $SRC/mame64 ]]
+then
+  MAMECVER=$($SRC/mame64 -version | awk '{print $1}' | cut -d'.' -f2)
+  MAME64=1
+  REQFAIL=0
+fi
+[ "$MAMECVER" != "$MAMEVER" ] && echo "$MAMECVER for old build does not match $MAMEVER" && REQFAIL=1
+[ $REQFAIL -ne 0 ] && exit $REQFAIL
+
+echo "Updating $DEST"
+rsync -avzP --exclude-from update-mame.exclude "${SRC}" "${DEST}"
+
+[ $MAME64 -eq 1 ] && cp $SRC/mame64 $DEST/mame

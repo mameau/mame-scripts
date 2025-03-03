@@ -1,16 +1,16 @@
 #!/bin/bash
 
-set +u
-#set +x
+#set +u
+set -x
 
 OUTPATH=/mnt/mame-media/media/floppies
 
-DEVIMG=${1:-/tmp/floptmp.img}
-DEVMNT=${2:-/mnt/mame-media/mount-floppy/}
+DEVIMG=${1:-floptmp.img}
+DEVMNT=${2:-/mnt/mame-media/mount-floppy}
 
 [ ! -d $DEVMNT ] && echo "Cannot find $DEVMNT" && exit 1
 [ -f $OUTPATH/$DESTIMG ] && echo "Image exists $DESTIMG, delete to recreate" && exit 1
 
 sudo umount $DEVMNT
 sleep 1
-sudo mount -o loop $DEVIMG $DEVMNT
+sudo mount -o loop "$OUTPATH/$DEVIMG" $DEVMNT

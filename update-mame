@@ -8,17 +8,20 @@ DEBUG=""
 DERIV=""
 
 function _usage {
-  echo "$(basename $0)"
-  echo " -h this help"
-  echo " -b build name (local)"
-  echo " -m mame version"
-  echo " -s this is a mame64 build"
-  echo " -d this is a debug build"
-  echo " -f build type (e.g wolf)"
+cat << USAGE
+$(basename $0)
+ -h this help
+ -b build name (the src dir to take mame from)
+ -m mame version (e.g. 243)
+ -s this is a mame64 build (only targeting mame64, old builds)
+ -d this is a debug build (only targeting mamed)
+ -f build type (e.g wolf this influences compile dir/local dir)
+ -o output directory to put this build
+USAGE
   exit 1
 }
 
-OPTSTRING=":hb:m:df:"
+OPTSTRING=":hb:m:df:o:"
 while getopts $OPTSTRING ARG
 do
   case $ARG in
@@ -39,6 +42,10 @@ do
       ;;
     f)
       DERIV=${OPTARG}
+      ;;
+    o)
+      OUTPUTDIR=${OPTARG}
+      ;;
   esac
 done
 
@@ -49,12 +56,12 @@ REQFAIL=0
 [ -z "$MAMEVER" ]   && echo "Pass -m with mame version (e.g 236)"    && REQFAIL=1
 [ $REQFAIL -ne 0 ]  && _usage
 
-SRC=$HOME/dockerout/${DERIV}mame/${DERIV}mame${MAMEBUILD}/
-DEST=$HOME/games/emulator-${DERIV}mame${MAMEVER}${DEBUG}/
+#SRC=$HOME/devel/com.github/${DERIV}mame/${DERIV}mame${MAMEBUILD}/
+SRC=$HOME/volumes/mame-build/${DERIV}mame${MAMEBUILD}/
+DEST=$HOME/games/emulator-${DERIV}mame${MAMEVER}${DEBUG}${OUTPUTDIR}/
 
-
-[ ! -d $DEST ] && mkdir $DEST
-MAMECVER=$($SRC/mame${DEBUG} -version | awk '{print $1}' | cut -d'.' -f2)
+[ ! -d $DEST ] && mkdir -p $DEST
+MAMECVER=$($SRC/${DERIV}mame${DEBUG} -version | awk '{print $1}' | cut -d'.' -f2)
 
 REQFAIL=0
 [ "$MAMECVER" != "$MAMEVER" ] && echo "$MAMECVER does not match $MAMEVER" && REQFAIL=1
